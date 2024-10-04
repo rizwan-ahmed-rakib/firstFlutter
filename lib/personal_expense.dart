@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Expense {
   final String name;
@@ -50,53 +49,56 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
   String _expenseName = '';
   double _expensePrice = 0.0;
   String _selectedCategory = 'Uncategorized';
-  List<Expense> _expense = [];
-  List<Expense> _filteredExpense = [];
+  List<Expense> _expenses = [];
+  List<Expense> _filteredExpenses = [];
   String _searchQuery = '';
-
-  // List to store categories
   List<String> _categories = ['Uncategorized'];
-
-  // Firestore collection reference to 'users' collection, and 'expense' sub-collection
-  final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
-  final String userId = "user.uid"; // Replace with actual user ID if necessary
-  final CollectionReference expensesCollection = FirebaseFirestore.instance.collection('users').doc('USER_ID').collection('expense');
+  late CollectionReference expensesCollection;
 
   @override
   void initState() {
     super.initState();
-    _loadExpensesFromFirebase(); // Load expenses from Firestore
+    _loadCurrentUserExpenses(); // Load the user's expense collection
     _loadCategories(); // Load categories from SharedPreferences
   }
 
-  // Function to load expenses from Firestore
-  void _loadExpensesFromFirebase() async {
-    QuerySnapshot querySnapshot = await expensesCollection.get();
-    setState(() {
-      _expense = querySnapshot.docs
-          .map((doc) => Expense.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
-      _filteredExpense = _expense; // Initialize filtered list
-    });
+  // Function to load current user expenses from Firestore
+  void _loadCurrentUserExpenses() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Accessing the user's expense collection
+      expensesCollection = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid) // Use the logged-in user's ID
+          .collection('expense');
+
+      QuerySnapshot querySnapshot = await expensesCollection.get();
+      setState(() {
+        _expenses = querySnapshot.docs
+            .map((doc) => Expense.fromMap(doc.data() as Map<String, dynamic>))
+            .toList();
+        _filteredExpenses = _expenses; // Initialize filtered list
+      });
+    }
   }
 
   // Function to calculate today's expenses
   double _calculateTodayExpense() {
     DateTime today = DateTime.now();
-    return _filteredExpense
+    return _filteredExpenses
         .where((expense) =>
-    expense.date.toDate().day == today.day &&
-        expense.date.toDate().month == today.month &&
-        expense.date.toDate().year == today.year)
+            expense.date.toDate().day == today.day &&
+            expense.date.toDate().month == today.month &&
+            expense.date.toDate().year == today.year)
         .fold(0.0, (sum, expense) => sum + expense.price);
   }
 
   // Function to calculate total expenses
   double _calculateTotalExpense() {
-    return _filteredExpense.fold(0.0, (sum, expense) => sum + expense.price);
+    return _filteredExpenses.fold(0.0, (sum, expense) => sum + expense.price);
   }
 
-  // Function to add an expense to Firestore (to users > expense sub-collection)
+  // Function to add an expense to Firestore
   void _addExpenseToFirebase() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -111,8 +113,8 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
       // Add expense to Firestore (inside user's 'expense' sub-collection)
       expensesCollection.add(newExpense.toMap()).then((_) {
         setState(() {
-          _expense.add(newExpense);
-          _filteredExpense = _expense;
+          _expenses.add(newExpense);
+          _filteredExpenses = _expenses; // Update filtered expenses
         });
 
         _formKey.currentState!.reset(); // Clear form fields
@@ -181,7 +183,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
   Widget build(BuildContext context) {
     double totalExpense = _calculateTotalExpense();
     double todayExpense = _calculateTodayExpense();
-    _filteredExpense.sort((a, b) => b.date.compareTo(a.date)); // Sort by date
+    _filteredExpenses.sort((a, b) => b.date.compareTo(a.date)); // Sort by date
 
     return Scaffold(
       appBar: AppBar(
@@ -218,10 +220,10 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value.toLowerCase();
-                  _filteredExpense = _expense
+                  _filteredExpenses = _expenses
                       .where((expense) =>
-                  expense.name.toLowerCase().contains(_searchQuery) ||
-                      expense.category.toLowerCase().contains(_searchQuery))
+                          expense.name.toLowerCase().contains(_searchQuery) ||
+                          expense.category.toLowerCase().contains(_searchQuery))
                       .toList();
                 });
               },
@@ -235,7 +237,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                 children: [
                   TextFormField(
                     decoration:
-                    InputDecoration(labelText: 'খরচের বর্ণনা লিখুন'),
+                        InputDecoration(labelText: 'খরচের বর্ণনা লিখুন'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'দয়া করে খরচের কারণটি লিখুন';
@@ -248,7 +250,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                   ),
                   TextFormField(
                     decoration:
-                    InputDecoration(labelText: 'খরচের পরিমাণ(টাকা)'),
+                        InputDecoration(labelText: 'খরচের পরিমাণ(টাকা)'),
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null || double.tryParse(value) == null) {
@@ -267,7 +269,8 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                         _selectedCategory = value!;
                       });
                     },
-                    items: _categories.map<DropdownMenuItem<String>>((String category) {
+                    items: _categories
+                        .map<DropdownMenuItem<String>>((String category) {
                       return DropdownMenuItem<String>(
                         value: category,
                         child: Text(category),
@@ -301,12 +304,12 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
 
             // Expense list
             Expanded(
-              child: _filteredExpense.isEmpty
+              child: _filteredExpenses.isEmpty
                   ? Text('কোন খরচের তথ্য পাওয়া যায়নি।')
                   : ListView.builder(
-                itemCount: _filteredExpense.length,
+                itemCount: _filteredExpenses.length,
                 itemBuilder: (context, index) {
-                  final expense = _filteredExpense[index];
+                  final expense = _filteredExpenses[index];
                   return Card(
                     elevation: 4,
                     child: ListTile(
@@ -396,7 +399,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                                             });
 
                                             setState(() {
-                                              _expense[index] = Expense(
+                                              _expenses[index] = Expense(
                                                 name: nameController.text,
                                                 price: double.parse(
                                                     priceController.text),
@@ -405,8 +408,8 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                                                     .text,
                                                 date: expense.date,
                                               );
-                                              _filteredExpense = List.from(
-                                                  _expense); // Update UI
+                                              _filteredExpenses = List.from(
+                                                  _expenses); // Update UI
                                             });
 
                                             Navigator.of(context).pop();
@@ -449,8 +452,8 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                                           });
 
                                           setState(() {
-                                            _expense.removeAt(index);
-                                            _filteredExpense = _expense;
+                                            _expenses.removeAt(index);
+                                            _filteredExpenses = _expenses;
                                           });
 
                                           Navigator.of(context).pop(); // ডিলিট করার পর ডায়ালগ বন্ধ
