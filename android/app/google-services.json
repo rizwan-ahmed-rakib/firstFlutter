@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "718697975769",
+    "project_id": "bebshar-poristhiti-38905",
+    "storage_bucket": "bebshar-poristhiti-38905.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:718697975769:android:ab3faf68cd7a29519fd3c8",
+        "android_client_info": {
+          "package_name": "com.hatureEngineers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlepkrfBCXrl6dk738ka8qmqZ5v6TGCfc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:718697975769:android:16ef7239364aec709fd3c8",
+        "android_client_info": {
+          "package_name": "com.hatureengineers.bebshar_poristhiti"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlepkrfBCXrl6dk738ka8qmqZ5v6TGCfc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

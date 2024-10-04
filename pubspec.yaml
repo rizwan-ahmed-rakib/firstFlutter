@@ -1,0 +1,50 @@
+name: bebshar_poristhiti
+description: "A new Flutter project."
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.3
+  flutter_secure_storage: ^9.2.2
+  firebase_storage: ^12.3.2
+  fluttertoast: ^8.2.8
+  intl: ^0.19.0 # For formatting
+  image_picker: ^1.1.2
+  shared_preferences: ^2.3.2
+  url_launcher: ^6.3.0
+  provider: ^6.1.2
+  cupertino_icons: ^1.0.8
+  image_picker_for_web: ^3.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/error.jpg
+    - assets/image1.jpg
+    - assets/image2.jpg
+    - assets/image3.jpg
+    - assets/image4.jpg
+    - assets/login_pic.jpg
+    - assets/icon/icon.png
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21 # Android min SDK
