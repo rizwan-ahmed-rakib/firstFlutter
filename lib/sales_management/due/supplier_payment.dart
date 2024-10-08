@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SupplierPaymentPage extends StatefulWidget {
@@ -14,27 +15,48 @@ class _SupplierPaymentPageState extends State<SupplierPaymentPage> {
   @override
   void initState() {
     super.initState();
-    _fetchDueData(); // Fetch data from Firestore
+    _fetchSupplierData(); // Fetch data from Firestore
   }
 
-  void _fetchDueData() async {
-    // Get data from Firestore
-    FirebaseFirestore.instance.collection('suppliers').snapshots().listen((snapshot) {
-      setState(() {
-        originalList = snapshot.docs.map((doc) {
-          var data = doc.data() as Map<String, dynamic>;
-          return {
-            'name': data['name'] ?? 'Unknown', // ডিফল্ট নাম
-            'amount': data['transaction'] ?? 0, // ডিফল্ট ট্রানজেকশন অ্যামাউন্ট
-            'image': data['image'] ?? 'assets/error.jpg', // ডিফল্ট ইমেজ
-          };
-        }).toList();
-        filteredList = originalList; // ডিফল্ট হিসেবে সব ডাটা দেখাবে
+  // Function to get the current user's UID
+  String? getCurrentUserId() {
+    User? user = FirebaseAuth.instance.currentUser;
+    return user?.uid;
+  }
+
+  void _fetchSupplierData() async {
+    String? userId = getCurrentUserId(); // Get the user's UID
+
+    if (userId != null) {
+      // Get data from Firestore based on the current user's UID
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('suppliers')
+          .snapshots()
+          .listen((snapshot) {
+        setState(() {
+          originalList = snapshot.docs.map((doc) {
+            var data = doc.data() as Map<String, dynamic>;
+            return {
+              'name': data['name'] ?? 'Unknown', // ডিফল্ট নাম
+              'amount': data['transaction'] ?? 0, // ডিফল্ট ট্রানজেকশন অ্যামাউন্ট
+              'image': data['image'] ?? 'assets/error.jpg', // ডিফল্ট ইমেজ
+            };
+          }).toList();
+          filteredList = originalList; // ডিফল্ট হিসেবে সব ডাটা দেখাবে
+        });
       });
-    });
+    } else {
+      // Handle case where the user is not logged in
+      setState(() {
+        originalList = [];
+        filteredList = [];
+      });
+    }
   }
 
-  void _filterDueList(String query) {
+  void _filterSupplierList(String query) {
     setState(() {
       if (query.isEmpty) {
         // যদি সার্চ ফিল্ড খালি হয়, মূল লিস্ট দেখাবে
@@ -73,7 +95,7 @@ class _SupplierPaymentPageState extends State<SupplierPaymentPage> {
                     Expanded(
                       child: Text(
                         supplier['name'],
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+                        style: TextStyle(fontSize: 26),
                       ),
                     ),
                     IconButton(
@@ -81,11 +103,6 @@ class _SupplierPaymentPageState extends State<SupplierPaymentPage> {
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'লেনদেনের পরিমাণ: ${supplier['amount']}৳',
-                  style: TextStyle(color: Colors.red, fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 10),
                 ClipRRect(
@@ -103,12 +120,17 @@ class _SupplierPaymentPageState extends State<SupplierPaymentPage> {
                     ),
                   ),
                 ),
+                SizedBox(height: 10),
+                Text(
+                  'আগের লেনদেন: ${supplier['amount']}৳',
+                  style: TextStyle(color: Colors.red, fontSize: 24, fontWeight: FontWeight.bold),
+                ),
 
                 SizedBox(height: 10),
                 TextField(
                   controller: amountController,
                   decoration: InputDecoration(
-                    labelText: 'টাকার পরিমাণ লিখুন',
+                    labelText: 'পরিমাণ লিখুন',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
@@ -133,8 +155,8 @@ class _SupplierPaymentPageState extends State<SupplierPaymentPage> {
                           });
                         },
                         child: Text(
-                          'পেলাম',
-                          style: TextStyle(color: Colors.blue, fontSize: 20),
+                          'টাকা পেলাম',
+                          style: TextStyle(color: Colors.red, fontSize: 20),
                         ),
                       ),
                     ),
@@ -153,7 +175,7 @@ class _SupplierPaymentPageState extends State<SupplierPaymentPage> {
                           });
                         },
                         child: Text(
-                          'টাকা দিলাম ',
+                          'টাকা দিলাম',
                           style: TextStyle(color: Colors.green, fontSize: 20),
                         ),
                       ),
@@ -172,7 +194,7 @@ class _SupplierPaymentPageState extends State<SupplierPaymentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('সাপ্লায়ার লেনদেন'),
+        title: Text('দ্রুত সাপ্লায়ার লেনদেন'),
         backgroundColor: Colors.green,
       ),
       body: Padding(
@@ -181,7 +203,7 @@ class _SupplierPaymentPageState extends State<SupplierPaymentPage> {
           children: [
             TextField(
               controller: _searchController,
-              onChanged: _filterDueList,
+              onChanged: _filterSupplierList,
               decoration: InputDecoration(
                 labelText: 'সার্চ করুন',
                 prefixIcon: Icon(Icons.search),

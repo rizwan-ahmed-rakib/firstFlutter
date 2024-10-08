@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../cash_box/cash_box.dart';
 import '../sales_management/due/customer_due_list.dart'; //due page
 import '../sales_management/due/supplier_payment.dart';
 import '../personal_expense.dart';
@@ -25,6 +26,7 @@ class ActionGrid extends StatelessWidget {
         _buildGridItem(Icons.inventory, 'প্রোডাক্ট স্টক', StockManagementPage(), Colors.brown),
         _buildGridItem(Icons.note_alt_outlined, 'খরচের হিসাব', PersonalExpensePage(), Colors.teal),
         _buildGridItem(Icons.people, 'সকল পার্টি', SupplierPaymentList(), Colors.red),
+        _buildGridItem(Icons.money, 'cash box', CashBoxScreen(), Colors.red),
       ],
     );
   }

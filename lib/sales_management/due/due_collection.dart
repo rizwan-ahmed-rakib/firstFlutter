@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class DueCollectionPage extends StatefulWidget {
@@ -17,21 +18,42 @@ class _DueCollectionPageState extends State<DueCollectionPage> {
     _fetchDueData(); // Fetch data from Firestore
   }
 
+  // Function to get the current user's UID
+  String? getCurrentUserId() {
+    User? user = FirebaseAuth.instance.currentUser;
+    return user?.uid;
+  }
+
   void _fetchDueData() async {
-    // Get data from Firestore
-    FirebaseFirestore.instance.collection('customers').snapshots().listen((snapshot) {
-      setState(() {
-        originalList = snapshot.docs.map((doc) {
-          var data = doc.data() as Map<String, dynamic>;
-          return {
-            'name': data['name'] ?? 'Unknown', // ডিফল্ট নাম
-            'amount': data['transaction'] ?? 0, // ডিফল্ট ট্রানজেকশন অ্যামাউন্ট
-            'image': data['image'] ?? 'assets/error.jpg', // ডিফল্ট ইমেজ
-          };
-        }).toList();
-        filteredList = originalList; // ডিফল্ট হিসেবে সব ডাটা দেখাবে
+    String? userId = getCurrentUserId(); // Get the user's UID
+
+    if (userId != null) {
+      // Get data from Firestore based on the current user's UID
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('customers')
+          .snapshots()
+          .listen((snapshot) {
+        setState(() {
+          originalList = snapshot.docs.map((doc) {
+            var data = doc.data() as Map<String, dynamic>;
+            return {
+              'name': data['name'] ?? 'Unknown', // ডিফল্ট নাম
+              'amount': data['transaction'] ?? 0, // ডিফল্ট ট্রানজেকশন অ্যামাউন্ট
+              'image': data['image'] ?? 'assets/error.jpg', // ডিফল্ট ইমেজ
+            };
+          }).toList();
+          filteredList = originalList; // ডিফল্ট হিসেবে সব ডাটা দেখাবে
+        });
       });
-    });
+    } else {
+      // Handle case where the user is not logged in
+      setState(() {
+        originalList = [];
+        filteredList = [];
+      });
+    }
   }
 
   void _filterDueList(String query) {
@@ -73,7 +95,7 @@ class _DueCollectionPageState extends State<DueCollectionPage> {
                     Expanded(
                       child: Text(
                         customer['name'],
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+                        style: TextStyle(fontSize: 26),
                       ),
                     ),
                     IconButton(
@@ -83,27 +105,26 @@ class _DueCollectionPageState extends State<DueCollectionPage> {
                   ],
                 ),
                 SizedBox(height: 10),
-                Text(
-                  'বাকির পরিমাণ: ${customer['amount']}৳',
-                  style: TextStyle(color: Colors.red, fontSize: 26, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10.0),
                   child: Image.network(
                     customer['image'],
-                    height: 200,  // ছবি যেকোনো অবস্থাতেই 200 পিক্সেল উচ্চতা নিবে
-                    width: double.infinity,  // প্রস্থ সম্পূর্ণ থাকবে
-                    fit: BoxFit.cover,  // ছবিটি নির্দিষ্ট সাইজে কভার করবে
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Image.asset(
                       'assets/error.jpg',
-                      height: 200,  // fallback ছবির উচ্চতা নির্ধারণ করা হলো
-                      width: double.infinity,  // fallback ছবির প্রস্থ সম্পূর্ণ থাকবে
-                      fit: BoxFit.cover,  // fallback ছবিও সঠিকভাবে ফ্রেমে মানিয়ে যাবে
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
-
+                SizedBox(height: 10),
+                Text(
+                  'বাকির পরিমাণ: ${customer['amount']}৳',
+                  style: TextStyle(color: Colors.red, fontSize: 24, fontWeight: FontWeight.bold),
+                ),
                 SizedBox(height: 10),
                 TextField(
                   controller: amountController,
@@ -125,12 +146,13 @@ class _DueCollectionPageState extends State<DueCollectionPage> {
                           padding: EdgeInsets.symmetric(vertical: 20),
                         ),
                         onPressed: () {
-                          setState(() {
-                            if (amountController.text.isNotEmpty) {
+                          if (amountController.text.isNotEmpty) {
+                            setState(() {
                               customer['amount'] += int.parse(amountController.text);
-                            }
-                            Navigator.pop(context);
-                          });
+                            });
+                            _updateCustomerAmount(customer['name'], customer['amount']);
+                          }
+                          Navigator.pop(context);
                         },
                         child: Text(
                           'টাকা দিলাম',
@@ -145,12 +167,13 @@ class _DueCollectionPageState extends State<DueCollectionPage> {
                           padding: EdgeInsets.symmetric(vertical: 20),
                         ),
                         onPressed: () {
-                          setState(() {
-                            if (amountController.text.isNotEmpty) {
+                          if (amountController.text.isNotEmpty) {
+                            setState(() {
                               customer['amount'] -= int.parse(amountController.text);
-                            }
-                            Navigator.pop(context);
-                          });
+                            });
+                            _updateCustomerAmount(customer['name'], customer['amount']);
+                          }
+                          Navigator.pop(context);
                         },
                         child: Text(
                           'টাকা পেলাম',
@@ -166,6 +189,23 @@ class _DueCollectionPageState extends State<DueCollectionPage> {
         );
       },
     );
+  }
+  // Function to update the customer's amount in Firestore
+  void _updateCustomerAmount(String customerName, int newAmount) async {
+    String? userId = getCurrentUserId();
+    if (userId != null) {
+      QuerySnapshot customerSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('customers')
+          .where('name', isEqualTo: customerName)
+          .get();
+
+      if (customerSnapshot.docs.isNotEmpty) {
+        DocumentReference customerDoc = customerSnapshot.docs.first.reference;
+        await customerDoc.update({'transaction': newAmount});
+      }
+    }
   }
 
   @override
@@ -216,7 +256,7 @@ class _DueCollectionPageState extends State<DueCollectionPage> {
                           errorBuilder: (context, error, stackTrace) => Image.asset('assets/error.jpg'),
                         ),
                       ),
-                      title: Text(customer['name'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      title: Text(customer['name'], style: TextStyle(fontSize: 18)),
                       trailing: Text(
                         '${customer['amount']}৳',
                         style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 19),

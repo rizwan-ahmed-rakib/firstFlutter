@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart'; //d
-import '../sales_management/due/add_customer_page.dart';
-import '../sales_management/due/add_supplier_page.dart';
+import 'package:flutter/material.dart';
+// import '../purchase_managenent/add_purchase_page.dart';
+import '../sales_management/sale_page.dart';
 
 class LargeActionButtons extends StatelessWidget {
   final BuildContext context;
@@ -27,9 +27,9 @@ class LargeActionButtons extends StatelessWidget {
       child: InkWell(
         onTap: () {
           if (label == 'ক্রয়') {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => AddSupplierPage()));
+            // Navigator.push(context, MaterialPageRoute(builder: (context) => AddPurchasePage()));
           } else if (label == 'বিক্রয়') {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => AddCustomerPage()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => SalesPage()));
           }
         },
         child: Card(

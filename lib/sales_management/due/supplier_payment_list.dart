@@ -1,10 +1,12 @@
-import 'package:bebshar_poristhiti/sales_management/due/supplier_payment.dart';
+import 'add_supplier_page.dart';
+import 'supplier_payment.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'add_supplier_page.dart';
+// import '../add_supplier_page.dart';
 
 class SupplierPaymentList extends StatefulWidget {
   @override
@@ -14,8 +16,28 @@ class SupplierPaymentList extends StatefulWidget {
 class _SupplierPaymentListState extends State<SupplierPaymentList> {
   String _searchText = ""; // সার্চ টেক্সট ধারণ করার জন্য
 
+  // Fetching the current user's ID from FirebaseAuth
+  String? getCurrentUserId() {
+    User? user = FirebaseAuth.instance.currentUser;
+    return user?.uid; // Return the user ID or null if the user is not logged in
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Get the user ID
+    String? userId = getCurrentUserId();
+
+    if (userId == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('পার্টি/সাপ্লায়ার'),
+        ),
+        body: Center(
+          child: Text('User is not logged in.'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green,
@@ -52,7 +74,7 @@ class _SupplierPaymentListState extends State<SupplierPaymentList> {
           children: [
             SizedBox(height: 10),
             _buildSearchBar(),
-            Expanded(child: _buildSupplierList()),
+            Expanded(child: _buildSupplierList(userId ?? '')), // Pass the userId to the supplier list
           ],
         ),
       ),
@@ -76,9 +98,13 @@ class _SupplierPaymentListState extends State<SupplierPaymentList> {
     );
   }
 
-  Widget _buildSupplierList() {
+  Widget _buildSupplierList(String userId) { // Accept userId as a parameter
     return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('suppliers').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId) // Use the userId to get the user's suppliers
+          .collection('suppliers')
+          .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
@@ -131,7 +157,12 @@ class _SupplierPaymentListState extends State<SupplierPaymentList> {
       ),
       title: Text(name),
       subtitle: Text(phone),
-      trailing: Text('৳ $transaction'),
+      trailing: Text('৳ $transaction', style: TextStyle(
+        color: Colors.red,
+        fontWeight: FontWeight.bold, // Bold the text
+        fontSize: 16,
+      ),
+      ),
       onTap: () {
         _showEditPopup(context, supplier); // এখানে ক্লিক করার ইভেন্ট যুক্ত করুন
       },
@@ -191,6 +222,8 @@ class _SupplierPaymentListState extends State<SupplierPaymentList> {
         String downloadUrl = await snapshot.ref.getDownloadURL();
 
         await FirebaseFirestore.instance
+            .collection('users')
+            .doc(getCurrentUserId() ?? '')
             .collection('suppliers')
             .doc(supplier.id)
             .update({'image': downloadUrl});
@@ -244,10 +277,12 @@ class _SupplierPaymentListState extends State<SupplierPaymentList> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Colors .white,
                   ),
                   onPressed: () async {
                     await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(getCurrentUserId() ?? '')
                         .collection('suppliers')
                         .doc(supplier.id)
                         .update({
@@ -295,6 +330,8 @@ class _SupplierPaymentListState extends State<SupplierPaymentList> {
               ),
               onPressed: () async {
                 await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(getCurrentUserId() ?? '')
                     .collection('suppliers')
                     .doc(supplier.id)
                     .delete();

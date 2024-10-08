@@ -8,13 +8,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 class Expense {
   final String name;
   final double price;
-  final String category;
   final Timestamp date;
 
   Expense({
     required this.name,
     required this.price,
-    required this.category,
     required this.date,
   });
 
@@ -23,7 +21,6 @@ class Expense {
     return {
       'name': name,
       'price': price,
-      'category': category,
       'date': date,
     };
   }
@@ -33,7 +30,6 @@ class Expense {
     return Expense(
       name: map['name'],
       price: map['price'],
-      category: map['category'],
       date: map['date'],
     );
   }
@@ -48,18 +44,15 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
   final _formKey = GlobalKey<FormState>();
   String _expenseName = '';
   double _expensePrice = 0.0;
-  String _selectedCategory = 'Uncategorized';
   List<Expense> _expenses = [];
   List<Expense> _filteredExpenses = [];
   String _searchQuery = '';
-  List<String> _categories = ['Uncategorized'];
   late CollectionReference expensesCollection;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentUserExpenses(); // Load the user's expense collection
-    _loadCategories(); // Load categories from SharedPreferences
+    _loadCurrentUserExpenses();// Load the user's expense collection
   }
 
   // Function to load current user expenses from Firestore
@@ -106,7 +99,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
       final newExpense = Expense(
         name: _expenseName,
         price: _expensePrice,
-        category: _selectedCategory,
+
         date: Timestamp.now(), // Current date and time
       );
 
@@ -123,61 +116,10 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
   }
 
   // Function to load categories from SharedPreferences
-  void _loadCategories() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? categoriesJson = prefs.getString('categories');
-    if (categoriesJson != null) {
-      List<dynamic> categoryList = json.decode(categoriesJson);
-      setState(() {
-        _categories = categoryList.cast<String>(); // Load categories
-      });
-    }
-  }
 
   // Function to save categories to SharedPreferences
-  void _saveCategories() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String categoriesJson = json.encode(_categories);
-    await prefs.setString('categories', categoriesJson);
-  }
 
-  // Function to add a new category through a dialog
-  void _showAddCategoryDialog() {
-    String newCategory = '';
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('খরচের খাত/তালিকা লিখুনঃ'),
-          content: TextField(
-            onChanged: (value) {
-              newCategory = value;
-            },
-            decoration: InputDecoration(hintText: "এখানে লিখুন"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (newCategory.isNotEmpty &&
-                    !_categories.contains(newCategory)) {
-                  setState(() {
-                    _categories.add(newCategory);
-                    _saveCategories(); // Save categories to SharedPreferences
-                  });
-                }
-                Navigator.of(context).pop();
-              },
-              child: Text('যুক্ত'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('বাতিল'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -210,25 +152,8 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
               ),
             ),
 
-            // Search bar
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Search Expense',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value.toLowerCase();
-                  _filteredExpenses = _expenses
-                      .where((expense) =>
-                          expense.name.toLowerCase().contains(_searchQuery) ||
-                          expense.category.toLowerCase().contains(_searchQuery))
-                      .toList();
-                });
-              },
-            ),
-            SizedBox(height: 20),
+
+
 
             // Expense form
             Form(
@@ -262,23 +187,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                       _expensePrice = double.parse(value!);
                     },
                   ),
-                  DropdownButtonFormField<String>(
-                    value: _selectedCategory,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value!;
-                      });
-                    },
-                    items: _categories
-                        .map<DropdownMenuItem<String>>((String category) {
-                      return DropdownMenuItem<String>(
-                        value: category,
-                        child: Text(category),
-                      );
-                    }).toList(),
-                    decoration: InputDecoration(
-                        labelText: 'খরচের তালিকা নির্বাচন করুন'),
-                  ),
+
                   SizedBox(height: 20),
 
                   // Add Expense button
@@ -295,10 +204,24 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
             ),
             SizedBox(height: 20),
 
-            // Add new category button
-            ElevatedButton(
-              onPressed: _showAddCategoryDialog,
-              child: Text('নতুন খরচের তালিকা যুক্ত করুন'),
+
+            SizedBox(height: 20),
+            // Search bar
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Search Expense',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                  _filteredExpenses = _expenses
+                      .where((expense) =>
+                  expense.name.toLowerCase().contains(_searchQuery) ||
+                      expense.name.toLowerCase().contains(_searchQuery)).toList();
+                });
+              },
             ),
             SizedBox(height: 20),
 
@@ -313,14 +236,14 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                   return Card(
                     elevation: 4,
                     child: ListTile(
-                      title: Text(expense.name),
+                      title:Text('৳${expense.price.toStringAsFixed(2)}'),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(expense.name),
+
                           Text(
-                              '৳${expense.price.toStringAsFixed(2)}, ${expense.category}'),
-                          Text(
-                            'তারিখ: ${DateFormat('yyyy-MM-dd – kk:mm').format(expense.date.toDate())}',
+                            'তারিখ: ${DateFormat('EEEE, dd-MM-yyyy – hh:mm a', 'en_BD').format(expense.date.toDate().toLocal())}',
                             style: TextStyle(fontSize: 12),
                           ),
                         ],
@@ -345,7 +268,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                                   TextEditingController
                                   categoryController =
                                   TextEditingController(
-                                      text: expense.category);
+                                      text: expense.name);
 
                                   return AlertDialog(
                                     title: Text('Update Expense'),
@@ -363,11 +286,6 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                                               labelText: 'Price'),
                                           keyboardType:
                                           TextInputType.number,
-                                        ),
-                                        TextField(
-                                          controller: categoryController,
-                                          decoration: InputDecoration(
-                                              labelText: 'Category'),
                                         ),
                                       ],
                                     ),
@@ -403,9 +321,7 @@ class _PersonalExpensePageState extends State<PersonalExpensePage> {
                                                 name: nameController.text,
                                                 price: double.parse(
                                                     priceController.text),
-                                                category:
-                                                categoryController
-                                                    .text,
+
                                                 date: expense.date,
                                               );
                                               _filteredExpenses = List.from(

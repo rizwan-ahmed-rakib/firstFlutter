@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart'; // For formatting date
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Firebase authentication
 
 class AddCustomerPage extends StatefulWidget {
   @override
@@ -11,11 +12,12 @@ class AddCustomerPage extends StatefulWidget {
 }
 
 class _AddCustomerPageState extends State<AddCustomerPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance; // FirebaseAuth instance
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _transactionController = TextEditingController();
-  DateTime? _selectedDate;
+  DateTime _selectedDate = DateTime.now(); // Default to today's date
   File? _selectedImage;
   String? _image;
 
@@ -23,7 +25,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _selectedDate, // Show previously selected or today's date
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
@@ -44,8 +46,16 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     }
   }
 
-  // Save customer function (you would handle Firebase saving here)
+  // Save customer function with automatic date selection if none chosen
   void _saveCustomer() async {
+    final User? user = _auth.currentUser; // Get the current logged-in user
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please log in to add customer')),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       // Image upload to Firebase Storage
       if (_selectedImage != null) {
@@ -58,16 +68,25 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         _image = 'assets/error.jpg'; // Default image path if no image is picked
       }
 
-      // Customer data to Firebase (this is where you would save to Firestore)
+      // Use selected date or current date if no date is chosen
+      final DateTime transactionDate = _selectedDate;
+
+      // Customer data to Firebase with UID
       final customerData = {
         'name': _nameController.text,
         'phone': _phoneController.text,
         'image': _image,
         'transaction': double.parse(_transactionController.text),
-        'transactionDate': _selectedDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
+        'transactionDate': transactionDate.toIso8601String(), // Save selected or current date
+        'uid': user.uid, // Save with the user's UID
       };
-      // Save data to Firestore
-      await FirebaseFirestore.instance.collection('customers').add(customerData);
+
+      // Save data to Firestore under the user's UID
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('customers')
+          .add(customerData);
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
@@ -79,7 +98,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       // Clear form after saving
       _formKey.currentState!.reset();
       setState(() {
-        _selectedDate = null;
+        _selectedDate = DateTime.now(); // Reset to today's date after saving
         _selectedImage = null;
       });
     }
@@ -100,8 +119,12 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date Picker
-                Text("লেনদেনের তারিখ", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                // Date Picker with icon and formatted text (dd/mm/yyyy)
+                Text(
+                  "লেনদেনের তারিখ",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
                 GestureDetector(
                   onTap: () => _selectDate(context),
                   child: Container(
@@ -110,11 +133,15 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      _selectedDate == null
-                          ? 'তারিখ নির্বাচন করুন'
-                          : DateFormat.yMMMMd().format(_selectedDate!),
-                      style: TextStyle(fontSize: 16, color: Colors.black),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          DateFormat('dd/MM/yyyy').format(_selectedDate), // Always show selected date or today's date
+                          style: TextStyle(fontSize: 16, color: Colors.black),
+                        ),
+                        Icon(Icons.calendar_today, color: Colors.black54), // Calendar icon
+                      ],
                     ),
                   ),
                 ),
@@ -152,8 +179,6 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                     ),
                   ),
                 ),
-
-
                 SizedBox(height: 20),
 
                 // Name Input

@@ -16,7 +16,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _transactionController = TextEditingController();
-  DateTime? _selectedDate;
+  DateTime _selectedDate = DateTime.now(); // Default to today's date
   File? _selectedImage;
   String? _image;
 
@@ -30,7 +30,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _selectedDate, // Show today's date as default
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
@@ -74,7 +74,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
           'phone': _phoneController.text,
           'image': _image,
           'transaction': double.parse(_transactionController.text),
-          'transactionDate': _selectedDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
+          'transactionDate': _selectedDate.toIso8601String(), // Save selected or default date
           'userId': uid, // Save the user ID for this supplier
         };
 
@@ -91,7 +91,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
         // Clear form after saving
         _formKey.currentState!.reset();
         setState(() {
-          _selectedDate = null;
+          _selectedDate = DateTime.now(); // Reset to today's date after saving
           _selectedImage = null;
         });
       } else {
@@ -118,8 +118,12 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date Picker
-                Text("লেনদেনের তারিখ", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                // Date Picker with icon and formatted text (dd/MM/yyyy)
+                Text(
+                  "লেনদেনের তারিখ",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
                 GestureDetector(
                   onTap: () => _selectDate(context),
                   child: Container(
@@ -128,11 +132,15 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      _selectedDate == null
-                          ? 'তারিখ নির্বাচন করুন'
-                          : DateFormat.yMMMMd().format(_selectedDate!),
-                      style: TextStyle(fontSize: 16, color: Colors.black),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          DateFormat('dd/MM/yyyy').format(_selectedDate), // Display default or selected date
+                          style: TextStyle(fontSize: 16, color: Colors.black),
+                        ),
+                        Icon(Icons.calendar_today, color: Colors.black54), // Calendar icon
+                      ],
                     ),
                   ),
                 ),
@@ -170,7 +178,6 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
                     ),
                   ),
                 ),
-
                 SizedBox(height: 20),
 
                 // Name Input

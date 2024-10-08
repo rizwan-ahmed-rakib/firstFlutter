@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:bebshar_poristhiti/requirement/pin_verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../bill/app_payment.dart';
 import '../product_management/product.dart';
 import '../requirement/pin_arter_logout.dart';
+// import '../sales_management/customer/add_customer_page.dart';
 import '../sales_management/due/add_customer_page.dart';
 
 class CustomDrawer extends StatefulWidget {

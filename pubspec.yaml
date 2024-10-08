@@ -25,6 +25,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   image_picker_for_web: ^3.0.5
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

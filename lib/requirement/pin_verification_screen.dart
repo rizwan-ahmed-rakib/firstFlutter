@@ -120,7 +120,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent, // Background color
                 padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                textStyle: TextStyle(fontSize: 18),
+                textStyle: TextStyle(fontSize: 20),
               ),
               child: Text(
                 'পিন যাচাই করুন',

@@ -4,7 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'requirement/login_screen.dart';
 import 'requirement/pin_verification_screen.dart'; // Pin verification screen import
 import 'firebase_options.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
 void main() async {
+  // Initialize locale data for Bangladesh
+  await initializeDateFormatting('bn_BD', null); // 'bn_BD' is for Bengali (Bangladesh)
   WidgetsFlutterBinding.ensureInitialized();
   await initializeFirebase(); // Initialize Firebase
   runApp(MyApp());

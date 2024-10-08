@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,8 +15,28 @@ class DuePage extends StatefulWidget {
 class _DuePageState extends State<DuePage> {
   String _searchText = ""; // সার্চ টেক্সট ধারণ করার জন্য
 
+  // Fetching the current user's ID from FirebaseAuth
+  String? getCurrentUserId() {
+    User? user = FirebaseAuth.instance.currentUser;
+    return user?.uid; // Return the user ID or null if the user is not logged in
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Get the user ID
+    String? userId = getCurrentUserId();
+
+    if (userId == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('বাকির খাতা'),
+        ),
+        body: Center(
+          child: Text('User  is not logged in.'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green,
@@ -52,7 +73,7 @@ class _DuePageState extends State<DuePage> {
           children: [
             SizedBox(height: 10),
             _buildSearchBar(),
-            Expanded(child: _buildCustomerList()),
+            Expanded(child: _buildCustomerList(userId ?? '')), // Pass the userId to the customer list
           ],
         ),
       ),
@@ -76,9 +97,14 @@ class _DuePageState extends State<DuePage> {
     );
   }
 
-  Widget _buildCustomerList() {
+  Widget _buildCustomerList(String userId) { // Accept userId as a parameter
     return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection('customers').snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId) // Use the userId to get the user's customers
+          .collection('customers')
+          .where('uid', isEqualTo: userId)
+          .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
@@ -131,9 +157,14 @@ class _DuePageState extends State<DuePage> {
       ),
       title: Text(name),
       subtitle: Text(phone),
-      trailing: Text('৳ $transaction'),
+      trailing: Text('৳ $transaction', style: TextStyle(
+        color: Colors.red,
+        fontWeight: FontWeight.bold, // Bold the text
+        fontSize: 16,
+      ),
+      ),
       onTap: () {
-        _showEditPopup(context, customer); // এখানে ক্লিক করার ইভেন্ট যুক্ত করুন
+        _showEditPopup(context, getCurrentUserId() ?? '', customer); // এখানে ক্লিক করার ইভেন্ট যুক্ত করুন
       },
     );
   }
@@ -191,6 +222,8 @@ class _DuePageState extends State<DuePage> {
         String downloadUrl = await snapshot.ref.getDownloadURL();
 
         await FirebaseFirestore.instance
+            .collection('users')
+            .doc(getCurrentUserId() ?? '')
             .collection('customers')
             .doc(customer.id)
             .update({'image': downloadUrl});
@@ -203,7 +236,7 @@ class _DuePageState extends State<DuePage> {
     }
   }
 
-  void _showEditPopup(BuildContext context, DocumentSnapshot customer) {
+  void _showEditPopup(BuildContext context, String userId, DocumentSnapshot customer) {
     TextEditingController nameController = TextEditingController(text: customer['name']);
     TextEditingController phoneController = TextEditingController(text: customer['phone']);
 
@@ -248,6 +281,8 @@ class _DuePageState extends State<DuePage> {
                   ),
                   onPressed: () async {
                     await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
                         .collection('customers')
                         .doc(customer.id)
                         .update({
@@ -281,12 +316,13 @@ class _DuePageState extends State<DuePage> {
   }
 
   void _showDeleteConfirmation(BuildContext context, DocumentSnapshot customer) {
+    String userId = getCurrentUserId() ?? '';
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('ডিলিট নিশ্চিত করুন'),
-          content: Text('আপনি কি ${customer['name']} নামের কাস্টমারকে ডিলিট করতে চান? আপনি যদি ডিলিট করেন তাহলে ${customer['name']}-এর বাকির হিসাব আপনার বাকির খাতা থেকে মুছে যাবে।'),
+          content: Text('আপনি কি ${customer['name']} নামের কাস্টমারকে ডিলিট করতে চান? আপনি যদি ডিলিট করেন তাহলে ${customer['name']}-এর লেনদেনের হিসাব মুছে যাবে।'),
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -295,6 +331,8 @@ class _DuePageState extends State<DuePage> {
               ),
               onPressed: () async {
                 await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userId)
                     .collection('customers')
                     .doc(customer.id)
                     .delete();

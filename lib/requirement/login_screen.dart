@@ -178,7 +178,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: 16),
                     _buildButton('OTP যাচাই করুন', _verifyOtp),
                   ],
-
                 ],
               ),
             ),
