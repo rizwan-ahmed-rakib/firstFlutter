@@ -236,7 +236,7 @@ class _CashBoxScreenState extends State<CashBoxScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Time Display in a Card
+
 
               SizedBox(height: 10),
 
@@ -283,9 +283,7 @@ class _CashBoxScreenState extends State<CashBoxScreen> {
                     // Calculate the current balance from Firestore data
                     final transactions = snapshot.data!.docs;
                     double totalBalance = transactions.fold(0.0, (sum, doc) {
-                      // return sum + (doc['amount'] as double);
-                      return sum + (doc['amount'] is int ? (doc['amount'] as int).toDouble() : doc['amount']);
-
+                      return sum + (doc['amount'] as double);
                     });
 
                     return Center(

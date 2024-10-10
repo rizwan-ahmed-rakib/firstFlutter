@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../../report/sale_report.dart';
 import 'add_customer_page.dart';
 import 'due_collection.dart';
 
@@ -14,6 +15,7 @@ class DuePage extends StatefulWidget {
 
 class _DuePageState extends State<DuePage> {
   String _searchText = ""; // সার্চ টেক্সট ধারণ করার জন্য
+
 
   // Fetching the current user's ID from FirebaseAuth
   String? getCurrentUserId() {
@@ -55,7 +57,8 @@ class _DuePageState extends State<DuePage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white70,
               foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               Navigator.push(
@@ -73,7 +76,8 @@ class _DuePageState extends State<DuePage> {
           children: [
             SizedBox(height: 10),
             _buildSearchBar(),
-            Expanded(child: _buildCustomerList(userId ?? '')), // Pass the userId to the customer list
+            Expanded(child: _buildCustomerList(userId ?? '')),
+            // Pass the userId to the customer list
           ],
         ),
       ),
@@ -97,7 +101,8 @@ class _DuePageState extends State<DuePage> {
     );
   }
 
-  Widget _buildCustomerList(String userId) { // Accept userId as a parameter
+  Widget _buildCustomerList(String userId) {
+    // Accept userId as a parameter
     return StreamBuilder(
       stream: FirebaseFirestore.instance
           .collection('users')
@@ -133,17 +138,20 @@ class _DuePageState extends State<DuePage> {
   }
 
   Widget _buildCustomerTile(BuildContext context, DocumentSnapshot customer) {
-    Map<String, dynamic>? customerData = customer.data() as Map<String, dynamic>?;
+    Map<String, dynamic>? customerData =
+        customer.data() as Map<String, dynamic>?;
 
-    String imageUrl = (customerData != null && customerData.containsKey('image'))
-        ? customerData['image']
-        : 'assets/error.jpg';
+    String imageUrl =
+        (customerData != null && customerData.containsKey('image'))
+            ? customerData['image']
+            : 'assets/error.jpg';
     String name = customerData?['name'] ?? 'Unknown';
     String phone = customerData?['phone'] ?? 'Unknown';
 
     String transaction = (customerData?['transaction'] is List)
         ? (customerData?['transaction'] as List<dynamic>).join(", ")
         : customerData?['transaction']?.toString() ?? '0';
+    bool _isHovered = false; // Variable to track hover state
 
     return ListTile(
       leading: GestureDetector(
@@ -157,19 +165,61 @@ class _DuePageState extends State<DuePage> {
       ),
       title: Text(name),
       subtitle: Text(phone),
-      trailing: Text('৳ $transaction', style: TextStyle(
-        color: Colors.red,
-        fontWeight: FontWeight.bold, // Bold the text
-        fontSize: 16,
-      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '৳ $transaction',
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold, // Bold the text
+              fontSize: 16,
+            ),
+          ),
+          SizedBox(width: 8),
+          // Add space between the transaction amount and the icon
+
+
+
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => CustomerLendingReport()),
+              );
+              // Define what happens when the eye icon is tapped
+              // _seeMoreDetails(context, customer); // Replace with your method to handle the tap
+            },
+            child: Row(
+              children: [
+                Icon(
+                  Icons.remove_red_eye, // Eye icon
+                  color: Colors.blue,
+                  // Icon color
+                ),
+                SizedBox(width: 4), // Small space between icon and text
+                Text(
+                  'See More',
+                  style: TextStyle(
+                    color: Colors.green, // Text color
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       onTap: () {
-        _showEditPopup(context, getCurrentUserId() ?? '', customer); // এখানে ক্লিক করার ইভেন্ট যুক্ত করুন
+        _showEditPopup(context, getCurrentUserId() ?? '',
+            customer); // Action on tapping the ListTile
       },
     );
   }
 
-  void _showImageDialog(BuildContext context, String imageUrl, DocumentSnapshot customer) {
+  void _showImageDialog(
+      BuildContext context, String imageUrl, DocumentSnapshot customer) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -207,7 +257,8 @@ class _DuePageState extends State<DuePage> {
     );
   }
 
-  Future<void> _pickAndUploadImage(BuildContext context, DocumentSnapshot customer) async {
+  Future<void> _pickAndUploadImage(
+      BuildContext context, DocumentSnapshot customer) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
@@ -216,7 +267,8 @@ class _DuePageState extends State<DuePage> {
 
       String fileName = 'customer_images/${customer.id}.jpg';
       try {
-        Reference storageReference = FirebaseStorage.instance.ref().child(fileName);
+        Reference storageReference =
+            FirebaseStorage.instance.ref().child(fileName);
         UploadTask uploadTask = storageReference.putFile(imageFile);
         TaskSnapshot snapshot = await uploadTask;
         String downloadUrl = await snapshot.ref.getDownloadURL();
@@ -229,27 +281,34 @@ class _DuePageState extends State<DuePage> {
             .update({'image': downloadUrl});
 
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ছবি সফলভাবে আপলোড করা হয়েছে')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('ছবি সফলভাবে আপলোড করা হয়েছে')));
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ছবি আপলোডে সমস্যা হয়েছে: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('ছবি আপলোডে সমস্যা হয়েছে: $e')));
       }
     }
   }
 
-  void _showEditPopup(BuildContext context, String userId, DocumentSnapshot customer) {
-    TextEditingController nameController = TextEditingController(text: customer['name']);
-    TextEditingController phoneController = TextEditingController(text: customer['phone']);
+  void _showEditPopup(
+      BuildContext context, String userId, DocumentSnapshot customer) {
+    TextEditingController nameController =
+        TextEditingController(text: customer['name']);
+    TextEditingController phoneController =
+        TextEditingController(text: customer['phone']);
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, // উভয় পাশে স্পেস দেওয়ার জন্য
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // উভয় পাশে স্পেস দেওয়ার জন্য
             children: [
               Text('এডিট করুন'),
               IconButton(
-                icon: Icon(Icons.delete_forever_outlined, color: Colors.red), // ডিলিট আইকন
+                icon: Icon(Icons.delete_forever_outlined, color: Colors.red),
+                // ডিলিট আইকন
                 onPressed: () {
                   _showDeleteConfirmation(context, customer);
                 },
@@ -315,14 +374,16 @@ class _DuePageState extends State<DuePage> {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, DocumentSnapshot customer) {
+  void _showDeleteConfirmation(
+      BuildContext context, DocumentSnapshot customer) {
     String userId = getCurrentUserId() ?? '';
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('ডিলিট নিশ্চিত করুন'),
-          content: Text('আপনি কি ${customer['name']} নামের কাস্টমারকে ডিলিট করতে চান? আপনি যদি ডিলিট করেন তাহলে ${customer['name']}-এর লেনদেনের হিসাব মুছে যাবে।'),
+          content: Text(
+              'আপনি কি ${customer['name']} নামের কাস্টমারকে ডিলিট করতে চান? আপনি যদি ডিলিট করেন তাহলে ${customer['name']}-এর লেনদেনের হিসাব মুছে যাবে।'),
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -359,4 +420,26 @@ class _DuePageState extends State<DuePage> {
       },
     );
   }
+}
+
+void _seeMoreDetails(BuildContext context, customer) {
+  // Define your action here, e.g., show a dialog, navigate to another page, etc.
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Customer Details'),
+      content: Text('More details about ${customer.name}'),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CustomerLendingReport()),
+            );
+          },
+          child: Text('Close'),
+        ),
+      ],
+    ),
+  );
 }

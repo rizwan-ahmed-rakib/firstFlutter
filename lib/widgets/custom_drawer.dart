@@ -1,11 +1,15 @@
 import 'dart:io';
+import 'package:bebshar_poristhiti/requirement/pin_verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../bill/app_payment.dart';
+import '../cash_box/cash_box.dart';
+import '../cash_box/periodical_dashBoard.dart';
+import '../cash_box/responsive_dashboard.dart';
+import '../expense/expenseUpdate.dart';
 import '../product_management/product.dart';
 import '../requirement/pin_arter_logout.dart';
-// import '../sales_management/customer/add_customer_page.dart';
 import '../sales_management/due/add_customer_page.dart';
 
 class CustomDrawer extends StatefulWidget {
@@ -15,7 +19,7 @@ class CustomDrawer extends StatefulWidget {
   final Function onImagePick;
   final Function toggleTheme; // <-- নতুন পরিবর্তন: থিম টগল করার জন্য ফাংশন
   final bool
-  isDarkTheme; // <-- নতুন প্যারামিটার যোগ করা ডার্ক থিমের স্টেটের জন্য
+      isDarkTheme; // <-- নতুন প্যারামিটার যোগ করা ডার্ক থিমের স্টেটের জন্য
 
   CustomDrawer({
     required this.name,
@@ -67,17 +71,27 @@ class _CustomDrawerState extends State<CustomDrawer> {
               padding: EdgeInsets.zero,
               children: [
                 _buildDrawerItem(
+                  icon: Icons.account_balance_wallet,
+                  text: 'Cash Box',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => CashBoxScreen()),
+                    );
+                  },
+                ),
+                _buildDrawerItem(
                   icon: Icons.note_alt_outlined,
                   text: 'প্রোডাক্ট যুক্ত করুন',
                   onTap: () {},
                 ),
                 _buildDrawerItem(
                   icon: Icons.list_alt_rounded,
-                  text: 'প্রোডাক্ট লিস্ট',
+                  text: 'প্রোডাক্ট লিস্ট responsive dashboard',
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ProductPage()),
+                      MaterialPageRoute(builder: (context) => DashboardPage()),
                     );
                   },
                 ),
@@ -87,14 +101,21 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => AddCustomerPage()),
+                      MaterialPageRoute(
+                          builder: (context) => AddCustomerPage()),
                     );
                   },
                 ),
                 _buildDrawerItem(
                   icon: Icons.shopping_cart,
-                  text: 'লাভ',
-                  onTap: () {},
+                  text: 'লাভ update expense',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => PersonalExpensePage()),
+                    );
+                  },
                 ),
                 _buildDrawerItem(
                   icon: Icons.payment_rounded,
@@ -105,6 +126,18 @@ class _CustomDrawerState extends State<CustomDrawer> {
                       MaterialPageRoute(
                           builder: (context) =>
                               AppPaymentPage()), // Navigate to AppPaymentPage
+                    );
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.medical_information_rounded,
+                  text: 'Bebsar Poristhiti',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              DashboardPage2()), // Navigate to AppPaymentPage
                     );
                   },
                 ),
@@ -123,8 +156,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder: (context) => PinAfterLogout(
-                          toggleTheme: widget.toggleTheme, // toggleTheme প্যারামিটার পাস করা
-                          isDarkTheme: widget.isDarkTheme, // isDarkTheme প্যারামিটার পাস করা
+                          toggleTheme: widget
+                              .toggleTheme, // toggleTheme প্যারামিটার পাস করা
+                          isDarkTheme: widget
+                              .isDarkTheme, // isDarkTheme প্যারামিটার পাস করা
                         ),
                       ),
                     );

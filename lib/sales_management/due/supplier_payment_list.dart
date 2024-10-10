@@ -1,3 +1,4 @@
+import '../../report/purchase_report.dart';
 import 'add_supplier_page.dart';
 import 'supplier_payment.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -61,7 +62,7 @@ class _SupplierPaymentListState extends State<SupplierPaymentList> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SupplierPaymentPage()),
+                MaterialPageRoute(builder: (context) => SupplierPayment()),
               );
             },
             child: Text('লেনদেন'),
@@ -157,12 +158,31 @@ class _SupplierPaymentListState extends State<SupplierPaymentList> {
       ),
       title: Text(name),
       subtitle: Text(phone),
-      trailing: Text('৳ $transaction', style: TextStyle(
-        color: Colors.red,
-        fontWeight: FontWeight.bold, // Bold the text
-        fontSize: 16,
+      trailing: Wrap(
+        children: [
+          Text('৳ $transaction', style: TextStyle(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          )),
+
+          TextButton.icon(
+            onPressed: () {
+              // এখানে আপনি ট্রানজ্যাকশন রিপোর্ট দেখানোর জন্য নেভিগেশন কোড লিখতে পারেন
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  // builder: (context) => SupplyerLendingReport(supplierId: supplier.id),
+                  builder: (context) => SupplyerLendingReport(),
+                ),
+              );
+            },
+            icon: Icon(Icons.more_horiz, color: Colors.blue),
+            label: Text('See More', style: TextStyle(color: Colors.blue)),
+          ),
+        ],
       ),
-      ),
+
       onTap: () {
         _showEditPopup(context, supplier); // এখানে ক্লিক করার ইভেন্ট যুক্ত করুন
       },
@@ -358,4 +378,7 @@ class _SupplierPaymentListState extends State<SupplierPaymentList> {
       },
     );
   }
+}
+
+class SupplierTransactionReportPage {
 }

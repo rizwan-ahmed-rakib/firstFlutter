@@ -2,12 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class SupplierPayment extends StatefulWidget {
+class OldCustomerSale extends StatefulWidget {
   @override
-  _SupplierPaymentState createState() => _SupplierPaymentState();
+  _OldCustomerSaleState createState() => _OldCustomerSaleState();
 }
 
-class _SupplierPaymentState extends State<SupplierPayment> {
+class _OldCustomerSaleState extends State<OldCustomerSale> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> originalList = []; // মূল ডাটা লিস্ট
   List<Map<String, dynamic>> filteredList = []; // ফিল্টারকৃত ডাটা লিস্ট
@@ -32,7 +32,7 @@ class _SupplierPaymentState extends State<SupplierPayment> {
       FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
-          .collection('suppliers')
+          .collection('customers')
           .snapshots()
           .listen((snapshot) {
         setState(() {
@@ -63,15 +63,15 @@ class _SupplierPaymentState extends State<SupplierPayment> {
         filteredList = originalList;
       } else {
         // সার্চ অনুযায়ী ফিল্টার করবে
-        filteredList = originalList.where((supplier) {
-          return supplier['name'].toLowerCase().contains(query.toLowerCase());
+        filteredList = originalList.where((customer) {
+          return customer['name'].toLowerCase().contains(query.toLowerCase());
         }).toList();
       }
     });
   }
 
   void _showDetails(int index) {
-    final supplier = filteredList[index];
+    final customer = filteredList[index];
     TextEditingController amountController = TextEditingController();
 
     showDialog(
@@ -83,7 +83,7 @@ class _SupplierPaymentState extends State<SupplierPayment> {
           ),
           child: Container(
             width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.height * 0.55,
+            height: MediaQuery.of(context).size.height * 0.35, // Adjusted height since image is removed
             padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -94,7 +94,7 @@ class _SupplierPaymentState extends State<SupplierPayment> {
                   children: [
                     Expanded(
                       child: Text(
-                        supplier['name'],
+                        customer['name'],
                         style: TextStyle(fontSize: 26),
                       ),
                     ),
@@ -105,31 +105,15 @@ class _SupplierPaymentState extends State<SupplierPayment> {
                   ],
                 ),
                 SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10.0),
-                  child: Image.network(
-                    supplier['image'],
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                      'assets/error.jpg',
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10),
                 Text(
-                  'আগের লেনদেন: ${supplier['amount']}৳',
+                  'বাকির পরিমাণ: ${customer['amount']}৳',
                   style: TextStyle(color: Colors.red, fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 10),
                 TextField(
                   controller: amountController,
                   decoration: InputDecoration(
-                    labelText: 'পরিমাণ লিখুন(টাকা)',
+                    labelText: 'পরিমাণ লিখুন',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
@@ -148,15 +132,15 @@ class _SupplierPaymentState extends State<SupplierPayment> {
                         onPressed: () {
                           if (amountController.text.isNotEmpty) {
                             setState(() {
-                              supplier['amount'] = (supplier['amount'] + double.parse(amountController.text)).toInt();
+                              customer['amount'] = (customer['amount'] + double.parse(amountController.text)).toInt();
                             });
-                            _updateSupplierAmount(supplier['name'], supplier['amount']);
+                            _updateCustomerAmount(customer['name'], customer['amount']);
                           }
                           Navigator.pop(context);
                         },
                         child: Text(
-                          'টাকা পেলাম',
-                          style: TextStyle(color: Colors.green, fontSize: 20),
+                          'টাকা দিলাম',
+                          style: TextStyle(color: Colors.red, fontSize: 20),
                         ),
                       ),
                     ),
@@ -169,15 +153,15 @@ class _SupplierPaymentState extends State<SupplierPayment> {
                         onPressed: () {
                           if (amountController.text.isNotEmpty) {
                             setState(() {
-                              supplier['amount'] = (supplier['amount'] - double.parse(amountController.text)).toInt();
+                              customer['amount'] = (customer['amount'] - double.parse(amountController.text)).toInt();
                             });
-                            _updateSupplierAmount(supplier['name'], supplier['amount']);
+                            _updateCustomerAmount(customer['name'], customer['amount']);
                           }
                           Navigator.pop(context);
                         },
                         child: Text(
-                          'টাকা দিলাম',
-                          style: TextStyle(color: Colors.red, fontSize: 20),
+                          'টাকা পেলাম',
+                          style: TextStyle(color: Colors.green, fontSize: 20),
                         ),
                       ),
                     ),
@@ -191,20 +175,20 @@ class _SupplierPaymentState extends State<SupplierPayment> {
     );
   }
 
-  // Function to update the supplier's amount in Firestore
-  void _updateSupplierAmount(String supplierName, int newAmount) async {
+  // Function to update the customer's amount in Firestore
+  void _updateCustomerAmount(String customerName, int newAmount) async {
     String? userId = getCurrentUserId();
     if (userId != null) {
-      QuerySnapshot supplierSnapshot = await FirebaseFirestore.instance
+      QuerySnapshot customerSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
-          .collection('suppliers')
-          .where('name', isEqualTo: supplierName)
+          .collection('customers')
+          .where('name', isEqualTo: customerName)
           .get();
 
-      if (supplierSnapshot.docs.isNotEmpty) {
-        DocumentReference supplierDoc = supplierSnapshot.docs.first.reference;
-        await supplierDoc.update({'transaction': newAmount});
+      if (customerSnapshot.docs.isNotEmpty) {
+        DocumentReference customerDoc = customerSnapshot.docs.first.reference;
+        await customerDoc.update({'transaction': newAmount});
       }
     }
   }
@@ -213,7 +197,7 @@ class _SupplierPaymentState extends State<SupplierPayment> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('সাপ্লায়ার লেনদেন'),
+        title: Text('বাকি আদায়'),
         backgroundColor: Colors.green,
       ),
       body: Padding(
@@ -239,7 +223,7 @@ class _SupplierPaymentState extends State<SupplierPayment> {
               child: ListView.builder(
                 itemCount: filteredList.length,
                 itemBuilder: (context, index) {
-                  final supplier = filteredList[index];
+                  final customer = filteredList[index];
                   return Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15.0),
@@ -250,16 +234,16 @@ class _SupplierPaymentState extends State<SupplierPayment> {
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(10.0),
                         child: Image.network(
-                          supplier['image'],
+                          customer['image'],
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Image.asset('assets/error.jpg'),
                         ),
                       ),
-                      title: Text(supplier['name'], style: TextStyle(fontSize: 18)),
+                      title: Text(customer['name'], style: TextStyle(fontSize: 18)),
                       trailing: Text(
-                        '${supplier['amount']}৳',
+                        '${customer['amount']}৳',
                         style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 19),
                       ),
                       onTap: () => _showDetails(index), // Show details on tap
