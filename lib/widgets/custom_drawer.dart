@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bebshar_poristhiti/expense/combindExpenseWithCheckBox.dart';
 import 'package:bebshar_poristhiti/requirement/pin_verification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,8 +8,16 @@ import '../bill/app_payment.dart';
 import '../cash_box/cash_box.dart';
 import '../cash_box/periodical_dashBoard.dart';
 import '../cash_box/responsive_dashboard.dart';
-import '../expense/expenseUpdate.dart';
+
+// import '../expense/personalexpense.dart';
+import '../expense/expense.dart';
+import '../expense/testingexpense.dart';
 import '../product_management/product.dart';
+import '../profile/100kbprofile.dart';
+import '../profile/newProfile.dart';
+import '../profile/profile.dart';
+import '../profile/updatingProfile.dart';
+import '../profile/webandAndroidProfile.dart';
 import '../requirement/pin_arter_logout.dart';
 import '../sales_management/due/add_customer_page.dart';
 
@@ -82,8 +91,13 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 ),
                 _buildDrawerItem(
                   icon: Icons.note_alt_outlined,
-                  text: 'প্রোডাক্ট যুক্ত করুন',
-                  onTap: () {},
+                  text: '100_kbProfile',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => UserProfile_100kb()),
+                    );
+                  },
                 ),
                 _buildDrawerItem(
                   icon: Icons.list_alt_rounded,
@@ -92,6 +106,16 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => DashboardPage()),
+                    );
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.list_alt_rounded,
+                  text: 'expense testing',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => PersonalExpensePage_testing()),
                     );
                   },
                 ),
@@ -108,12 +132,12 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 ),
                 _buildDrawerItem(
                   icon: Icons.shopping_cart,
-                  text: 'লাভ update expense',
+                  text: 'profile newgpt',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => PersonalExpensePage()),
+                          builder: (context) => ProfilePage()),
                     );
                   },
                 ),
@@ -146,6 +170,16 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   text: 'থিম পরিবর্তন', // Dark Theme toggle
                   onTap: () {
                     widget.toggleTheme(); // Call the toggleTheme function
+                  },
+                ),_buildDrawerItem(
+                  icon: Icons.settings_applications_sharp,
+                  text: 'profile', // Dark Theme toggle
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => UserProfilePage()),
+                    ); // Call the toggleTheme function
                   },
                 ),
                 _buildDrawerItem(

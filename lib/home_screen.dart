@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'notifications/notification.dart';
 import 'widgets/large_action_buttons.dart';
 import 'widgets/summary_card_section.dart';
 import 'widgets/action_grid.dart';
@@ -53,9 +54,38 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          Icon(Icons.notifications, color: Colors.black, size: screenWidth * 0.07),
-          SizedBox(width: screenWidth * 0.03),
+          IconButton(
+            icon: Icon(Icons.notifications, color: Colors.black, size: screenWidth * 0.07),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return Dialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0), // পপআপের জন্য গোলাকার কোণ
+                    ),
+                    child: NotificationsPage(), // পপআপে NotificationsPage পেজটি দেখানো হবে
+                  );
+                },
+              );
+            },
+          ),
+          SizedBox(width: screenWidth*0.03),
+
         ],
+        // actions: [
+        //   // GestureDetector(
+        //   //   onTap: () {
+        //   //     // এখানে ট্যাপ করলে নোটিফিকেশন পেজে যাবে
+        //   //     Navigator.push(
+        //   //       context,
+        //   //       MaterialPageRoute(builder: (context) => NotificationsPage()),
+        //   //     );
+        //   //   },
+        //   //   child: Icon(Icons.notifications, color: Colors.black, size: screenWidth * 0.07),
+        //   // ),
+        //   SizedBox(width: screenWidth * 0.03),
+        // ],
       ),
       drawer: CustomDrawer(
         name: _name,
